@@ -1,7 +1,7 @@
 #!/bin/bash
 #need to add the set, unset functionality 
 ##function
-function check1
+function param_check1
 {
 	echo "Thsi si check1"
 	if [[ ! -z value1 ]]; then 
@@ -15,7 +15,7 @@ function check1
         fi
 }
 
-function check_raw
+function param_check_raw
 {
 	echo "Thisis check_raw"
         if [[ $value -gt "100" ]]; then
@@ -23,7 +23,7 @@ function check_raw
         fi
 }
 
-function check_test
+function check_test_param
 {
 	echo "this is check_test";
 	echo $value
@@ -58,6 +58,40 @@ function check_lsi
 		done 
 	done
 }
+
+
+
+function check_3ware 
+{
+	echo "3ware card:"
+	/usr/local/eig_zabbix/sbin/raidcheck/bin/3ware /c0 show | grep SSD | awk '{print $1"   "$7"   "$8}' | while read did  total model
+	do
+		did_no=$(echo $did | cut -d 'p' -f1);
+		slot_no=$(echo $total | cut -d/ -f3);
+		for ((i=0;i<=$slot_no;i++));
+                do
+                        didarray[i]=$did_no;
+                done 
+		for ((i=0;i<=$slot_no;i++));
+                do
+			if [[ $model == "Micron" ]]; then
+				value=$(smartctl  -a -d  3ware,$i /dev/sg0 | grep  ^202 | awk '{print $4}');
+                                value1=$(smartctl  -a -d  3ware,$i /dev/sg0 | grep  ^202 | awk '{print $NF}');
+                                check1 $value $value1
+				#rest of the section needs to be filled
+			fi
+		done
+	done
+}
+
+
+		
+
+
+
+
+
+
 
 ##main fnction
 function check_raid
