@@ -1,0 +1,99 @@
+#!/bin/bash
+
+
+##function
+function check1
+{
+	echo "Thsi si check1"
+	if [[ ! -z value1 ]]; then 
+		if [[ $value == "10" || $value -lt "10" ]]; then
+        		echo "Need to be replaced";
+		fi
+	else
+		if [[ $value == "10" || $value -lt "10" || $value1 == "90" || $value -gt "90" ]]; then 
+			echo "Need to be replaced"
+		fi
+        fi
+}
+
+function check_raw
+{
+	echo "Thisis check_raw"
+        if [[ $value -gt "100" ]]; then
+        	echo "Need to be replaced";
+        fi
+}
+
+function check_test
+{
+	echo "this is check_test";
+	echo $value
+	if [[ $value -gt "100" ]]; then 
+		echo "Local drive need s to be replaced"
+	fi
+}
+
+##main fnction
+function check_raid
+{
+	raid=`lspci | grep -i raid | egrep -o "Adaptec|3ware|LSI"`;
+	if [[ $raid == "LSI"]]; then 
+		check_lsi;
+	elif [[ $raid == "3ware" ]]; then 
+		check_3ware;
+	elif [[ $raid ==  "Adaptec" ]]; then 
+		check_adap;
+	else
+		echo "No known controller: looking for ATA drives";
+		check_ATA;
+}
+
+##main program
+check_raid;
+
+if [[ `lsscsi | awk '{print $3}'` == "ATA" ]]; then 
+
+#a=(`lsscsi  | awk '{print $NF}'`)
+a=(/dev/sda /dev/sdb)
+for i in ${a[@]}; 
+do 
+	echo $i; 
+	name=$(echo $i | cut -d/ -f3); 
+	echo $name; 
+	model=$(cat /sys/block/$name/device/model | cut -d_ -f1 ); 
+	model1=$(cat /sys/block/$name/device/model |awk '{print $1}');
+	if [[ $model == "Kingston" ]]; then
+		echo $model1 
+		echo "100 ----> 1, check the field value not raw_value"
+		value=$(smartctl -a $i | grep ^231| awk '{print $4}');
+		check1 $value
+	elif [[ $model == "sandforce" ]]; then
+		echo "100 ----> 1, check the field value not raw_value"
+		value=$(smartctl -a $i | grep ^231| awk '{print $4}');
+		check1 $value;
+	elif [[ $model == "intel" ]]; then 
+		echo "100 ----> 1, check the field value not raw_value"
+		value=$(smartctl -a $i | grep ^233| awk '{print $4}');
+		check1 $value;
+	elif [[ $model == "samsung" ]]; then 
+		echo "100 ----> 1, check the field value not raw_value";
+		value=$(smartctl -a $i | grep ^177| awk '{print $4}');
+		check1 $value;
+	elif [[ $model == "Cruial" ]]; then 
+		echo "1 ----> 100, check the field value not raw_value";
+		value=$(smartctl -a $i | grep ^173| awk '{print $NF}');
+		check_raw $value
+	elif [[ $model == "Micron" ]]; then
+		value=$(smartctl -a $i | grep ^202| awk '{print $NF}');
+		value1=$(smartctl -a $i | grep ^202| awk '{print $NF}');
+		check1 $value
+	elif [[ $model1 == "WDC" ]]; then 
+		value=$(sudo smartctl -a $i | grep ^197| awk '{print $NF}');echo $value;sudo smartctl -a $i | grep ^197| awk '{print $NF}';
+		check_test $value
+	else 
+		echo "Brand unknown. check manually"
+	fi
+done
+
+elif [[ ``
+
