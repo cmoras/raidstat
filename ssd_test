@@ -1,6 +1,5 @@
 #!/bin/bash
-
-
+#need to add the set, unset functionality 
 ##function
 function check1
 {
@@ -10,7 +9,7 @@ function check1
         		echo "Need to be replaced";
 		fi
 	else
-		if [[ $value == "10" || $value -lt "10" || $value1 == "90" || $value -gt "90" ]]; then 
+		if [[ $value == "10" || $value -lt "10" || $value1 == "90" || $value1 -gt "90" ]]; then 
 			echo "Need to be replaced"
 		fi
         fi
@@ -33,6 +32,33 @@ function check_test
 	fi
 }
 
+
+function check_lsi 
+{
+	echo "LSI card: ";
+	## make necessary changes 
+	#starting with reading the necessary values from  the LSI card. Since we are only interested in SSD's we are are targeting that 
+	#variables need to be unset.
+	/usr/local/eig_zabbix/sbin/raidcheck/bin/storcli64 /c0  show  | grep SSD | awk '{print $1"    "$2"    "$12}'  | while read total did mo;
+	do
+		slot_no=$(echo $total | cut -d: -f1);
+		model=$(echo $mo | egrep -o "Micron|Crucial");
+		for ((i=0;i<=$slot_no;i++));
+		do
+			didarray[i]=$did;
+		done 
+		for ((i=0;i<=$slot_no;i++));
+		do
+			if  [[ $model == "Micron" ]]; then 
+				value=$(smartctl  -a -d  sat+megaraid,$i /dev/sg0 | grep  ^202 | awk '{print $4}');
+				value1=$(smartctl  -a -d  sat+megaraid,$i /dev/sg0 | grep  ^202 | awk '{print $NF}');
+				check1 $value $value1
+			#the rest of the drives
+			fi
+		done 
+	done
+}
+
 ##main fnction
 function check_raid
 {
@@ -51,7 +77,8 @@ function check_raid
 ##main program
 check_raid;
 
-if [[ `lsscsi | awk '{print $3}'` == "ATA" ]]; then 
+
+if [[ `lsscsi |grep disk | awk '{print $3}'` == "ATA" ]]; then 
 
 #a=(`lsscsi  | awk '{print $NF}'`)
 a=(/dev/sda /dev/sdb)
