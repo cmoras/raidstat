@@ -9,7 +9,7 @@ https://www.cyberciti.biz/faq/linux-checking-sas-sata-disks-behind-adaptec-raid-
 
 
 # raidstat
-This script will handle the following :
+This section will hold the following :
 --consistency check
 --check number of physical drives
 --check logical drives
