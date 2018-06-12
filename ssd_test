@@ -85,12 +85,28 @@ function check_3ware
 }
 
 
-		
-
-
-
-
-
+function check_adp
+{
+	echo "Adaptec card:"
+	count=`/usr/local/eig_zabbix/sbin/raidcheck/bin/arconf  GETCONFIG 1 | grep -i group  |wc -l`;
+	final_count=$(( $count + 2 ));
+	/usr/local/eig_zabbix/sbin/raidcheck/bin/arconf  GETCONFIG 1 | gre -i group | grep -oP "(?<=Device:).*(?=)" | while read id  ser;
+	do
+		did=$( echo $id |cut -d')' -f1);
+		model=`lsscsi  | grep disk | grep -v dev | awk '{print $3}'`
+		serial=$(echo $mod |cut -d'-' -f1);
+		for ((i=2;i<$final_count;i++))
+		do
+			if [[ $model == "WDC" ]]; then 
+				echo "Slot: " $did;
+				#smartctl  -d  sat -a /dev/sg0
+				##not sure for  ssd. goin with the same logic 
+				smartctl  -d  sat -a /dev/sg$i |grep "Media_Wearout_Indicator" |awk '{print $4}');
+				param_check1;
+			fi
+		done
+	done
+}
 
 
 ##main fnction
